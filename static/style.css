@@ -236,7 +236,7 @@ img { display: block; }
 .btn.ghost:hover:not(:disabled) { background: var(--surface-3); }
 .btn.big { width: 100%; padding: 14px 20px; font-size: 16px; border-radius: 14px; }
 .btn.big.primary { background: var(--grad); box-shadow: 0 8px 24px rgba(124, 92, 255, .3); }
-.btn.big.primary:hover:not(:disabled) { filter: brightness(1.06); }
+.btn.big.primary:hover:not(:disabled) { background: var(--grad); filter: brightness(1.06); }
 .btn.sm { padding: 6px 12px; font-size: 13px; }
 
 .link-btn {
