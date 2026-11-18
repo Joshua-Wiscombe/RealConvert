@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>RealConvert</title>
+  <link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="RealConvert home">
+        <img src="/static/logo.svg" alt="" width="34" height="34">
+        <span>Real<span class="brand-accent">Convert</span></span>
+      </a>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="openFolderBtn" type="button" title="Open downloads folder" aria-label="Open downloads folder"></button>
+        <button class="icon-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings"></button>
+      </div>
+    </header>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <main>
+      <section class="hero">
+        <h1>Paste a link. <span class="grad">Get the file.</span></h1>
+        <p class="sub">YouTube, TikTok, Instagram, X, Facebook and 1,000+ more sites — vertical or long-form,
+          in original quality, as MP4, MP3, WAV and more.</p>
+        <form id="linkForm" class="linkbar" autocomplete="off" novalidate>
+          <span class="linkbar-icon" id="linkIcon"></span>
+          <input id="urlInput" type="text" inputmode="url" placeholder="Paste a video link…" spellcheck="false"
+                 autocapitalize="off" aria-label="Video link">
+          <button type="button" class="btn ghost" id="pasteBtn">Paste</button>
+          <button type="submit" class="btn primary" id="goBtn">Go</button>
+        </form>
+        <p class="platforms">
+          <span>YouTube</span><span>TikTok</span><span>Instagram</span><span>X</span><span>Facebook</span>
+          <span>Vimeo</span><span>Reddit</span><span>SoundCloud</span><span>Twitch</span><span>+1000 more</span>
+        </p>
+        <p class="tip">Tip: paste several links (or a playlist) at once to download them all.</p>
+      </section>
+
+      <section id="resultArea" aria-live="polite"></section>
+
+      <section class="downloads" id="downloadsSection" hidden>
+        <div class="section-head">
+          <h2>Downloads</h2>
+          <button class="link-btn" id="clearBtn" type="button">Clear finished</button>
+        </div>
+        <ul id="jobList" class="job-list"></ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-row">
+        <span class="muted">Saving to</span>
+        <button class="link-btn path" id="folderPath" type="button" title="Open this folder"></button>
+        <button class="link-btn" id="changeFolderBtn" type="button">Change</button>
+      </div>
+      <div class="footer-row muted" id="engineInfo"></div>
+      <div class="footer-row muted small">Runs entirely on your computer, powered by the free, open-source yt-dlp and ffmpeg.
+        Only download videos you own or have permission to save.</div>
+    </footer>
+  </div>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" id="settingsForm">
+      <div class="dialog-head">
+        <h2>Settings</h2>
+        <button class="icon-btn" value="cancel" type="submit" aria-label="Close" id="settingsClose"></button>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Save files to</span>
+        <span class="field-row">
+          <input type="text" id="setOutputDir" spellcheck="false">
+          <button type="button" class="btn ghost" id="browseBtn">Browse…</button>
+        </span>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Use cookies from</span>
+        <select id="setBrowser"></select>
+        <span class="hint">Only needed for private videos, age-restricted videos, or when a site says you must log in.
+          Pick the browser you're logged in with — your cookies are read on this computer and never leave it.
+          On Windows, close Chrome/Edge completely first (Firefox works best).</span>
+      </label>
+
+      <label class="field">
+        <span class="field-label">…or a cookies.txt file <span class="muted">(optional)</span></span>
+        <input type="text" id="setCookieFile" placeholder="C:\path\to\cookies.txt" spellcheck="false">
+      </label>
+
+      <label class="field">
+        <span class="field-label">Downloads at the same time</span>
+        <select id="setParallel">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option>
+        </select>
+      </label>
+
+      <div class="field">
+        <span class="field-label">Download engine</span>
+        <div class="engine-box">
+          <div id="engineDetails" class="small"></div>
+          <button type="button" class="btn ghost" id="updateBtn">Update engine</button>
+        </div>
+        <span class="hint">Sites change all the time. RealConvert updates itself when it starts, but if a link
+          suddenly stops working, update here and restart.</span>
+      </div>
+
+      <p class="form-error" id="settingsError" hidden></p>
+
+      <div class="dialog-actions">
+        <button type="submit" value="cancel" class="btn ghost">Cancel</button>
+        <button type="button" class="btn primary" id="settingsSave">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

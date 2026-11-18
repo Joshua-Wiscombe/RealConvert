@@ -1,0 +1,7 @@
+# The download engine. Left unpinned on purpose: sites change often and
+# new yt-dlp releases keep downloads working. run.py keeps it updated.
+yt-dlp[default]
+# Local web app
+flask>=3.0
+# A ready-made ffmpeg for Windows, macOS and Linux (no separate install needed)
+imageio-ffmpeg>=0.5
