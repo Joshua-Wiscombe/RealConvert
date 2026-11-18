@@ -929,6 +929,10 @@ class JobManager:
             job.speed = job.eta = None
             if temp_dir:
                 shutil.rmtree(temp_dir, ignore_errors=True)
+                try:
+                    temp_dir.parent.rmdir()  # only succeeds once no other download is using it
+                except OSError:
+                    pass
             self.slots.release()
 
     def _download(self, job: Job, settings: dict, temp_dir: Path):
