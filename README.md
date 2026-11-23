@@ -1,7 +1,7 @@
 # RealConvert
 
-**Paste a link, get the file.** RealConvert is a free app that runs on your own computer and opens in
-your browser. It downloads videos from YouTube, TikTok, Instagram, X (Twitter), Facebook, Vimeo,
+**Paste a link, get the file.** RealConvert is a free desktop app: it runs on your own computer,
+opens in its own window from an icon on your desktop, and needs no account. It downloads videos from YouTube, TikTok, Instagram, X (Twitter), Facebook, Vimeo,
 Reddit, SoundCloud, Twitch and [1,000+ other sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md),
 vertical or long-form, in their original quality, and saves them as the format you choose.
 
@@ -20,33 +20,47 @@ with site changes, and [ffmpeg](https://ffmpeg.org/) for converting. Both are in
 
 ## Start it
 
-You need **Python 3.10 or newer** (free). The launcher offers to install it if it's missing.
-The first start takes a minute or two while it sets things up. After that it starts in seconds.
+You need **Python 3.10 or newer** (free). The start file offers to install it if it's missing.
+
+**The first time only**, open the start file for your computer (below). It spends a minute or two
+setting up, then adds a **RealConvert icon** and opens the app. **From then on, just open
+RealConvert from that icon** like any other app.
 
 ### Windows
-1. Download this project (green **Code** button → **Download ZIP**), then unzip it somewhere, such as your Documents folder.
-2. Double-click **`RealConvert-Windows.bat`**.
+1. Download this project (green **Code** button → **Download ZIP**). Right-click the ZIP and choose
+   **Extract All…**, then **Extract**. Put the folder somewhere it can stay, such as your Documents folder.
+2. Open the folder and double-click **`RealConvert-Windows.bat`**.
    - If Windows shows "Windows protected your PC", click **More info → Run anyway**.
    - If you don't have Python, it offers to install it for you. Afterwards, double-click the file again.
      (If you install Python yourself from [python.org](https://www.python.org/downloads/), tick **"Add python.exe to PATH"**.)
-3. Your browser opens RealConvert. Keep the black window open while you use it, and close it to quit.
+3. A black window shows the setup, then closes by itself, and RealConvert opens in its own window.
+4. **Next time:** use the **RealConvert** icon on your desktop or in the Start menu.
+   (You can right-click it in the Start menu to **Pin to taskbar**.)
 
 ### Mac
-1. Download and unzip this project.
-2. Double-click **`RealConvert-Mac.command`**.
-   - If macOS says it can't be opened, **right-click → Open → Open**. You only need to do this once.
+1. Download and unzip this project. Move the folder somewhere it can stay, such as your Documents folder.
+2. Right-click **`RealConvert-Mac.command`** and choose **Open**, then **Open** again.
    - If it opens in a text editor instead, open **Terminal**, type `chmod +x ` (with a space), drag the
-     file into the Terminal window, press Enter, then double-click it again.
-   - No Python yet? Install it from [python.org](https://www.python.org/downloads/macos/) (or with Homebrew), then double-click again.
-3. Your browser opens RealConvert. Keep the Terminal window open while you use it.
+     file into the Terminal window, press Enter, then try again.
+   - No Python yet? Install it from [python.org](https://www.python.org/downloads/macos/) (or with Homebrew), then try again.
+3. After setup, RealConvert opens in its own window and you can close the Terminal window.
+4. **Next time:** open **RealConvert** from Launchpad, Spotlight or your Applications folder. You can
+   drag it to your Dock.
+
+On a Mac, RealConvert opens in its own window if you have Chrome, Edge or Brave installed.
+With only Safari, it opens as a Safari tab instead. It works the same either way.
 
 ### Linux
 ```bash
 ./RealConvert-Linux.sh
 ```
-(On Ubuntu/Debian you may first need `sudo apt install python3 python3-venv python3-tk`.)
+This adds RealConvert to your applications menu. (On Ubuntu/Debian you may first need
+`sudo apt install python3 python3-venv python3-tk`.)
 
-**Tip:** bookmark `http://127.0.0.1:8765`. If RealConvert is already running, opening the launcher again just opens the page.
+**Closing the RealConvert window quits the app.** If a download is still running, it finishes first.
+**Don't move or delete the RealConvert folder** after setup, because the icon runs the app from there.
+If you do move it, open the start file again, then run `python run.py --make-shortcuts` from that
+folder to point the icon at the new place.
 
 ---
 
@@ -92,32 +106,41 @@ To update right away, click **Update engine** at the bottom of the page, then cl
 Make sure the footer says **YouTube helper: deno**. If it doesn't, delete the `.venv` folder and start
 RealConvert again to reinstall, or install [Deno](https://deno.com/) or [Node.js](https://nodejs.org/).
 
+**RealConvert doesn't open from its icon**
+Open the start file (`RealConvert-Windows.bat` / `RealConvert-Mac.command`) instead. It shows what's
+happening. There's also a log file, `realconvert.log`, in the RealConvert folder.
+
+**The icon is missing**
+Run `python run.py --make-shortcuts` from a terminal in the RealConvert folder.
+
 **Start over from scratch**
-Close RealConvert, delete the `.venv` folder inside the RealConvert folder, and start it again.
+Close RealConvert, delete the `.venv` folder inside the RealConvert folder, and open the start file again.
 
 ---
 
 ## Extras
 
 **Download to your phone:** start RealConvert with `--lan` (e.g. `python run.py --lan` from a terminal
-in this folder). The window shows an address like `http://192.168.1.20:8765`. Open it on your phone
+in this folder). This runs it inside the terminal instead of its own window. The window shows an address like `http://192.168.1.20:8765`. Open it on your phone
 (same Wi-Fi) and finished downloads get a "Save to this device" button. Only use this on networks you trust.
 
-**Other options:** `python run.py --port 9000` (different port) · `--no-browser` (don't open the browser) ·
-`--no-update` (skip the update check).
+**Other options:** `python run.py --console` (run inside the terminal with a browser tab) ·
+`--port 9000` (different port) · `--no-update` (skip the update check) · `--make-shortcuts` (add the icon again).
 
 ## How it's put together
 
 | File | What it does |
 |---|---|
-| `RealConvert-Windows.bat` / `-Mac.command` / `-Linux.sh` | Double-click launchers. They find Python and run `run.py` |
+| `RealConvert-Windows.bat` / `-Mac.command` / `-Linux.sh` | First-time start files. They find Python and run `run.py` |
 | `run.py` | Creates a private Python environment in `.venv`, installs/updates everything, starts the app |
+| `desktop.py` | The app window, the desktop/Start menu/Applications icon, and error pop-ups |
 | `app.py` | The local web server (only reachable from your own computer unless you use `--lan`) |
 | `engine.py` | Downloading (yt-dlp), converting (ffmpeg), progress, file naming |
 | `static/` | The web page you see |
 
-Settings are saved in `settings.json`. Everything RealConvert installs lives in the `.venv` folder,
-so deleting the RealConvert folder removes it completely.
+Settings are saved in `settings.json`. Everything RealConvert installs lives in the `.venv` folder.
+To remove RealConvert completely, delete its folder and its icon (desktop + Start menu on Windows,
+`RealConvert.app` in Applications on a Mac).
 
 ## Fair use
 

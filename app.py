@@ -35,7 +35,11 @@ app.json.ensure_ascii = False
 settings = engine.Settings()
 jobs = engine.JobManager(settings)
 
-STATE = {'lan': False, 'port': DEFAULT_PORT, 'restart_needed': False, 'updating': False}
+STATE = {'lan': False, 'port': DEFAULT_PORT, 'restart_needed': False, 'updating': False,
+         'app_mode': False, 'last_seen': None, 'bye_at': None, 'visible': True}
+WINDOW_GONE_AFTER = 25           # seconds without a sign of life from a window that's on screen
+HIDDEN_WINDOW_GONE_AFTER = 150   # minimized/hidden windows check in much less often
+BYE_GRACE = 6             # seconds to wait after the window closes, in case it was only reloading
 LOCAL_HOSTS = {'127.0.0.1', 'localhost', '::1'}
 
 
@@ -54,8 +58,18 @@ def _hostname(host: str) -> str:
 def guard():
     if not STATE['lan'] and _hostname(request.host or '') not in LOCAL_HOSTS:
         abort(403)
+    if request.path == '/api/bye':
+        # Sent by the page as it closes (navigator.sendBeacon can't add headers): same-origin only.
+        origin = request.headers.get('Origin')
+        if origin and _hostname(origin.split('://', 1)[-1]) != _hostname(request.host or ''):
+            abort(403)
+        return None
     if request.method not in ('GET', 'HEAD', 'OPTIONS') and request.headers.get('X-RealConvert') != '1':
         abort(403)
+    if request.path.startswith('/api/') and request.path != '/api/ping':
+        STATE['last_seen'] = time.time()
+        if request.headers.get('X-RealConvert-Visible') in ('0', '1'):
+            STATE['visible'] = request.headers['X-RealConvert-Visible'] == '1'
 
 
 @app.after_request
@@ -96,6 +110,12 @@ def index():
     return send_file(STATIC_DIR / 'index.html')
 
 
+@app.post('/api/bye')
+def bye():
+    STATE['bye_at'] = time.time()
+    return ('', 204)
+
+
 @app.get('/api/ping')
 def ping():
     return jsonify({'app': APP_NAME, 'version': APP_VERSION})
@@ -114,6 +134,7 @@ def status():
         'updating': STATE['updating'],
         'lan': STATE['lan'],
         'lan_url': lan_url() if STATE['lan'] else None,
+        'app_mode': STATE['app_mode'],
         'settings': s,
         'browsers': list(engine.COOKIE_BROWSERS),
         'platform': sys.platform,
@@ -318,7 +339,10 @@ def update_engine():
         latest = _pypi_latest()
         if latest and _normalize_version(latest) <= _normalize_version(current):
             return jsonify({'updated': False, 'version': current, 'message': f'Already up to date (yt-dlp {current}).'})
-        proc = subprocess.run([sys.executable, '-m', 'pip', 'install', '-U', '--disable-pip-version-check',
+        python = Path(sys.executable)
+        if python.name.lower() == 'pythonw.exe' and python.with_name('python.exe').exists():
+            python = python.with_name('python.exe')
+        proc = subprocess.run([str(python), '-m', 'pip', 'install', '-U', '--disable-pip-version-check',
                                'yt-dlp[default]'], capture_output=True, text=True, timeout=600,
                               creationflags=engine.NO_WINDOW)
         if proc.returncode != 0:
@@ -369,11 +393,42 @@ def already_running(port: int) -> bool:
 
 def port_free(host: str, port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if os.name != 'nt':  # match the server's own setting, so a just-closed port counts as free
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind((host, port))
             return True
         except OSError:
             return False
+
+
+def open_window(url: str, app_mode: bool) -> None:
+    if app_mode:
+        import desktop
+        desktop.open_app_window(url)
+    else:
+        webbrowser.open(url)
+
+
+def quit_when_window_closed(server) -> None:
+    """In app mode, stop once the RealConvert window has been closed and nothing is downloading."""
+    started = time.time()
+    while True:
+        time.sleep(2)
+        now = time.time()
+        if jobs.active_count():
+            continue
+        last, bye = STATE['last_seen'], STATE['bye_at']
+        if last is None:
+            if now - started > 180:  # the window never showed up
+                break
+            continue
+        if now - last > (WINDOW_GONE_AFTER if STATE['visible'] else HIDDEN_WINDOW_GONE_AFTER):
+            break
+        if bye and bye > last and now - bye > BYE_GRACE:
+            break
+    engine.log('The RealConvert window was closed — quitting.')
+    server.shutdown()
 
 
 def main(argv=None):
@@ -389,14 +444,18 @@ def main(argv=None):
     parser.add_argument('--lan', action='store_true',
                         help='also allow phones/computers on your Wi-Fi to use RealConvert')
     parser.add_argument('--no-browser', action='store_true', help='don’t open the browser automatically')
+    parser.add_argument('--app-mode', action='store_true',
+                        help='open in its own window and quit when that window is closed')
     args = parser.parse_args(argv)
+    if args.lan:
+        args.app_mode = False
 
     host = '0.0.0.0' if args.lan else '127.0.0.1'
     port = args.port
     if already_running(port):
         print(f'RealConvert is already running — opening http://127.0.0.1:{port}')
         if not args.no_browser:
-            webbrowser.open(f'http://127.0.0.1:{port}')
+            open_window(f'http://127.0.0.1:{port}', args.app_mode)
         return
     while not port_free(host, port):
         port += 1
@@ -404,7 +463,8 @@ def main(argv=None):
             print('Could not find a free port to run on.')
             sys.exit(1)
 
-    STATE.update(lan=args.lan, port=port)
+    moved = port != args.port
+    STATE.update(lan=args.lan, port=port, app_mode=args.app_mode)
     FFMPEG_VERSION = engine.ffmpeg_version()
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
     jobs.cleanup_temp()
@@ -418,8 +478,11 @@ def main(argv=None):
     print(f'   Saving files to: {settings.snapshot()["output_dir"]}')
     print(f'   Engine: yt-dlp {engine.ytdlp_version()} · ffmpeg {FFMPEG_VERSION or "MISSING"}'
           f' · JS runtime: {next(iter(engine.JS_RUNTIMES), "none")}')
-    print('   Keep this window open while you use RealConvert.')
-    print('   Close it (or press Ctrl+C) to quit.')
+    if args.app_mode:
+        print('   Closing the RealConvert window quits the app (after any downloads finish).')
+    else:
+        print('   Keep this window open while you use RealConvert.')
+        print('   Close it (or press Ctrl+C) to quit.')
     print(f'  {line}\n')
     if not engine.FFMPEG:
         print('  ! ffmpeg was not found. Downloads will work but converting will not.\n')
@@ -427,8 +490,10 @@ def main(argv=None):
         print('  ! No JavaScript runtime (Deno) found. Some YouTube videos may fail or be lower quality.\n')
 
     server = make_server(host, port, app, threaded=True)
-    if not args.no_browser:
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+    if not args.no_browser or (moved and args.app_mode):
+        threading.Timer(0.5, lambda: open_window(url, args.app_mode)).start()
+    if args.app_mode:
+        threading.Thread(target=quit_when_window_closed, args=(server,), daemon=True).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

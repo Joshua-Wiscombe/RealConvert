@@ -91,7 +91,7 @@ class ApiError extends Error {
 }
 
 async function api(path, { method = 'GET', body, signal } = {}) {
-  const opts = { method, signal, headers: {} };
+  const opts = { method, signal, headers: { 'X-RealConvert-Visible': document.hidden ? '0' : '1' } };
   if (method !== 'GET') {
     opts.headers['Content-Type'] = 'application/json';
     opts.headers['X-RealConvert'] = '1';
@@ -636,9 +636,12 @@ $('#clearBtn').addEventListener('click', async () => {
 });
 
 let lastDoneIds = null;
+let failedPolls = 0;
 async function refreshJobs() {
   try {
     const data = await api('/api/jobs');
+    if (failedPolls >= 2) $('#banner').hidden = true;
+    failedPolls = 0;
     state.jobs = data.jobs;
     const doneIds = new Set(data.jobs.filter((j) => j.status === 'done').map((j) => j.id));
     if (lastDoneIds) {
@@ -649,9 +652,24 @@ async function refreshJobs() {
     lastDoneIds = doneIds;
     if (data.restart_needed) showRestartBanner();
     renderJobs();
-  } catch { /* server gone; try again next tick */ }
+  } catch {
+    failedPolls += 1;
+    if (failedPolls === 2) showClosedBanner();
+  }
   schedulePoll();
 }
+
+function showClosedBanner() {
+  const b = $('#banner');
+  b.innerHTML = `${icon('alert')} <span>RealConvert has closed. Open it again from its icon to keep going.</span>`;
+  b.hidden = false;
+}
+
+// Let RealConvert know when its window closes, so the app can quit (after any downloads finish).
+document.addEventListener('visibilitychange', () => refreshJobs());
+window.addEventListener('pagehide', () => {
+  try { navigator.sendBeacon('/api/bye', ''); } catch { /* ignore */ }
+});
 
 function schedulePoll() {
   clearTimeout(state.pollTimer);

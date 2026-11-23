@@ -5,3 +5,4 @@ settings.json
 .realconvert-temp/
 .DS_Store
 Thumbs.db
+realconvert.log
