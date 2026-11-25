@@ -39,12 +39,15 @@ RealConvert from that icon** like any other app.
 
 ### Mac
 1. Download and unzip this project. Move the folder somewhere it can stay, such as your Documents folder.
-2. Right-click **`RealConvert-Mac.command`** and choose **Open**, then **Open** again.
-   - If it opens in a text editor instead, open **Terminal**, type `chmod +x ` (with a space), drag the
-     file into the Terminal window, press Enter, then try again.
-   - No Python yet? Install it from [python.org](https://www.python.org/downloads/macos/) (or with Homebrew), then try again.
-3. After setup, RealConvert opens in its own window and you can close the Terminal window.
-4. **Next time:** open **RealConvert** from Launchpad, Spotlight or your Applications folder. You can
+2. Open **Terminal**: press **⌘ Space**, type `Terminal`, press **Return**.
+3. Type `bash` and a space. Then drag **`RealConvert-Mac.command`** from the folder into the Terminal
+   window, and press **Return**.
+   (Starting it this way avoids the "Apple could not verify…" message macOS shows for downloaded files.)
+   - If your Mac asks whether Terminal or RealConvert can access a folder, click **Allow**.
+   - No Python yet? It opens [python.org](https://www.python.org/downloads/macos/). Install Python from
+     there, then repeat this step.
+4. After setup, RealConvert opens in its own window and you can close Terminal.
+5. **Next time:** open **RealConvert** from Launchpad, Spotlight or your Applications folder. You can
    drag it to your Dock.
 
 On a Mac, RealConvert opens in its own window if you have Chrome, Edge or Brave installed.

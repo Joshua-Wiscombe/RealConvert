@@ -196,6 +196,13 @@ def build_mac_app(bundle: Path, python: Path, run_py: Path) -> None:
     launcher.write_text(f'#!/bin/bash\nexec {shlex.quote(str(python))} {shlex.quote(str(run_py))} "$@"\n')
     launcher.chmod(0o755)
     shutil.copy(ICONS / 'icon.icns', resources / f'{APP_NAME}.icns')
+    if sys.platform == 'darwin':
+        # Clear any "downloaded from the internet" flag and sign it locally, so macOS opens it without fuss.
+        for cmd in (['xattr', '-cr', str(bundle)], ['codesign', '--force', '--deep', '--sign', '-', str(bundle)]):
+            try:
+                subprocess.run(cmd, capture_output=True, timeout=60)
+            except Exception:
+                pass
     os.utime(bundle)  # nudge Finder to pick up the icon
 
 
